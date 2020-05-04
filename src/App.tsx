@@ -3,17 +3,19 @@ import scriptjs from "scriptjs"
 
 import { groups, points } from "./k-means"
 
-declare var google: any
-
 const MELBOURNE = { lat: -37.813629, lng: 144.963058 }
 const MARKER_DROP_DELAY = 200
 const GROUP_MARKERS_DELAY = 3000
 
 function App() {
   // const [map, setMap] = useState(null);
-  const mapEl = useRef(null)
+  const mapEl = useRef<HTMLDivElement>(null)
 
   const googleMapsHasLoadedCallback = () => {
+    if (!mapEl || !mapEl.current) {
+      return
+    }
+
     const map = new google.maps.Map(mapEl.current, {
       center: MELBOURNE,
       zoom: 10,
@@ -59,7 +61,7 @@ function App() {
   useEffect(() => {
     // As seen in react-google-maps' codebase: https://github.com/tomchentw/react-google-maps/blob/master/src/withScriptjs.jsx#L58
     scriptjs(
-      "https://maps.googleapis.com/maps/api/js?key=AIzaSyCvnJVKB15Os2X_IWWt4Ir4z_sPRy8gxOI&callback=initMap",
+      "https://maps.googleapis.com/maps/api/js?key=AIzaSyCvnJVKB15Os2X_IWWt4Ir4z_sPRy8gxO",
       googleMapsHasLoadedCallback
     )
   }, [])

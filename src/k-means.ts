@@ -2,14 +2,27 @@
 // https://towardsdatascience.com/the-5-clustering-algorithms-data-scientists-need-to-know-a36d136ef68
 // https://www.educba.com/k-means-clustering-algorithm/ -- quite good
 
+// NOTE: K-means works well to cluster the points to the closest group. However,
+// k-means *does not equally* divide the points. This is interesting. In a real world
+// environment this probably would not work. If a driver were assigned 1 delivery
+// and another were assigned 50, this would probably not be acceptable. There are
+// numerous interesting questions though: what if the 50 could be delivered at a
+// far greater rate than if they were divided? Should the durations be summed and
+// then the work redistributed? More questions like this...
+
 import _ from "lodash"
 
 const K = 3
 const NUMBER_OF_POINTS = 30
-const LEFTMOST_LAT = -37.58567
-const RIGHTMOST_LAT = -38.005632
-const TOPMOST_LNG = 144.610326
-const BOTTOMMOST_LNG = 145.385414
+const K_MEANS_ITERATIONS_LIMIT = 50
+
+// Rounding as an optimization: https://gis.stackexchange.com/a/8674
+const optimizedCoords = (n: number) => _.round(n, 4)
+const randomOptimizedCoords = _.flow([_.random, optimizedCoords])
+const LEFTMOST_LAT = optimizedCoords(-37.58567)
+const RIGHTMOST_LAT = optimizedCoords(-38.005632)
+const TOPMOST_LNG = optimizedCoords(144.610326)
+const BOTTOMMOST_LNG = optimizedCoords(145.385414)
 
 interface Point {
   lat: number
@@ -56,16 +69,17 @@ const recalculateGroupMeans = () =>
     const verticalMean = _.sumBy(group.points, "lng") / group.points.length
     group.lat = horizontalMean
     group.lng = verticalMean
-    group.points = []
   })
+
+const resetGroupPoints = () => groups.forEach(group => (group.points = []))
 
 // ============================================================================
 // Main
 // ============================================================================
 
 const points = _.times(NUMBER_OF_POINTS, () => ({
-  lat: _.random(LEFTMOST_LAT, RIGHTMOST_LAT),
-  lng: _.random(BOTTOMMOST_LNG, TOPMOST_LNG),
+  lat: randomOptimizedCoords(LEFTMOST_LAT, RIGHTMOST_LAT),
+  lng: randomOptimizedCoords(BOTTOMMOST_LNG, TOPMOST_LNG),
 }))
 
 const maxLat = _.maxBy(points, "lat")?.lat as number
@@ -74,17 +88,19 @@ const maxLng = _.maxBy(points, "lng")?.lng as number
 const minLng = _.minBy(points, "lng")?.lng as number
 
 const groups = _.times(K, () => ({
-  lat: _.random(maxLat, minLat),
-  lng: _.random(maxLng, minLng),
+  lat: randomOptimizedCoords(maxLat, minLat),
+  lng: randomOptimizedCoords(maxLng, minLng),
   points: [] as Point[],
 }))
 
-let iterations = 0
 let oldGroups: Group[]
+let iteration = 0
+let shouldContinue = false
 
 const haveGroupMeansConverged = () =>
   oldGroups.every((oldGroup, i) => pointsMatch(oldGroup, groups[i]))
 
+console.group("K-means")
 do {
   console.log("Running k-means iteration")
 
@@ -93,14 +109,26 @@ do {
   assignPointsToGroups()
   recalculateGroupMeans()
 
-  iterations++
-  // Ensure iterations haven't exceed 50 as a safeguard
-} while (iterations < 50 && !haveGroupMeansConverged())
+  iteration++
 
-console.log("Total k-means iterations:", iterations)
+  // Stop if iteration has exceed 50 as a safeguard
+  shouldContinue =
+    iteration < K_MEANS_ITERATIONS_LIMIT && !haveGroupMeansConverged()
 
-// if (iterations >= 50) {
-//   throw new Error("K-means algorithmn did not converge before 50 iterations");
-// }
+  if (shouldContinue) {
+    resetGroupPoints()
+  }
+} while (shouldContinue)
+
+console.log("Total k-means iterations:", iteration)
+console.log("Points:", points)
+console.log("Groups:", groups)
+console.groupEnd()
+
+if (iteration >= K_MEANS_ITERATIONS_LIMIT) {
+  throw new Error(
+    `K-means algorithmn did not converge before ${K_MEANS_ITERATIONS_LIMIT} iterations`
+  )
+}
 
 export { groups, points }
