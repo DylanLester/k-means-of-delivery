@@ -24,7 +24,7 @@ const RIGHTMOST_LAT = optimizedCoords(-38.005632)
 const TOPMOST_LNG = optimizedCoords(144.610326)
 const BOTTOMMOST_LNG = optimizedCoords(145.385414)
 
-interface Point {
+export interface Point {
   lat: number
   lng: number
 }
@@ -41,7 +41,7 @@ interface Group extends Point {
 // on Earth's surface is more complicated than this (I think). Google has a distance
 // calculation service, whether to use this (costly) or the naive solution below
 // would be a business decision
-const distanceBetweenPoints = (a: Point, b: Point) => {
+export const distanceBetweenPoints = (a: Point, b: Point) => {
   const horizontalDist = a.lat - b.lat
   const verticalDist = a.lng - b.lng
   const distance = Math.sqrt(horizontalDist ** 2 + verticalDist ** 2)
