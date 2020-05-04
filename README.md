@@ -1,4 +1,4 @@
-![Image of the running app](./k-means-of-delivery.PNG)
+![Example gif](./example.gif)
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
